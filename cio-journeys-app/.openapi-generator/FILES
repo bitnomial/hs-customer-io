@@ -1,0 +1,7 @@
+.openapi-generator-ignore
+README.md
+Setup.hs
+journeys-app.cabal
+lib/JourneysApp/API.hs
+lib/JourneysApp/Types.hs
+stack.yaml
