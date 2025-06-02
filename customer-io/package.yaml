@@ -1,0 +1,20 @@
+name: customer-io
+synopsis: customer.io library
+spec-version: 0.36.0
+maintainer: Bitnomial <support@bitnomial.com>
+homepage: https://customer.io
+author: Bitnomial
+copyright: 2025 Bitnomial, Inc.
+license: AllRightsReserved
+version: 0.1.0
+
+language: GHC2021
+
+library:
+  source-dirs: src/lib
+  dependencies:
+    - base
+    - servant
+    # - http-api-data
+    - servant-client
+    # - servant-client-core

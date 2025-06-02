@@ -1,0 +1,28 @@
+- &defaults
+  spec-version: 0.36.0
+  maintainer: Bitnomial <support@bitnomial.com>
+  homepage: https://bitnomial.com
+  author: Bitnomial
+  copyright: 2025 Bitnomial, Inc.
+  license: AllRightsReserved
+  version: 0.1.0
+
+  language: GHC2021
+
+  ghc-options:
+    - -Wall
+    - -Wmissing-home-modules
+    - -Widentities
+    - -Wincomplete-uni-patterns
+    - -Wincomplete-record-updates
+    - -Wpartial-fields
+    - -Wmissing-export-lists
+    - -Wno-unused-do-bind
+    - -Wunused-packages
+    - -funbox-strict-fields
+    - -fwrite-ide-info
+
+  _exe-ghc-options: &exe-ghc-options
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
