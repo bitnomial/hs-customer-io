@@ -1,4 +1,4 @@
-cabal-version: 1.12
+cabal-version: 2.2
 
 -- This file has been generated from package.yaml by hpack version 0.38.0.
 --
@@ -8,10 +8,10 @@ name:           customer-io
 version:        0.1.0
 synopsis:       customer.io library
 homepage:       https://customer.io
-author:         Bitnomial
-maintainer:     Bitnomial <support@bitnomial.com>
+maintainer:     Bitnomial <help@bitnomial.com>
 copyright:      2025 Bitnomial, Inc.
-license:        AllRightsReserved
+license:        BSD-3-Clause
+license-file:   LICENSE
 build-type:     Simple
 
 library
