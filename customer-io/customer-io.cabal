@@ -1,0 +1,34 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.38.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           customer-io
+version:        0.1.0
+synopsis:       customer.io library
+homepage:       https://customer.io
+author:         Bitnomial
+maintainer:     Bitnomial <support@bitnomial.com>
+copyright:      2025 Bitnomial, Inc.
+license:        AllRightsReserved
+build-type:     Simple
+
+library
+  exposed-modules:
+      Customer.IO.App
+      Customer.IO.Track
+  hs-source-dirs:
+      src/lib
+  ghc-options: -Wall -Werror -Wmissing-home-modules -Widentities -Wincomplete-uni-patterns -Wincomplete-record-updates -Wpartial-fields -Wmissing-export-lists -Wno-unused-do-bind -Wunused-packages -funbox-strict-fields -fwrite-ide-info
+  build-depends:
+      aeson
+    , base
+    , containers
+    , http-client
+    , http-client-tls
+    , mtl
+    , servant
+    , servant-client
+    , text
+  default-language: GHC2021

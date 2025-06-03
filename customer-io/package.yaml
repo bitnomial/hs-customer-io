@@ -12,9 +12,26 @@ language: GHC2021
 
 library:
   source-dirs: src/lib
+  ghc-options:
+    - -Wall
+    - -Werror
+    - -Wmissing-home-modules
+    - -Widentities
+    - -Wincomplete-uni-patterns
+    - -Wincomplete-record-updates
+    - -Wpartial-fields
+    - -Wmissing-export-lists
+    - -Wno-unused-do-bind
+    - -Wunused-packages
+    - -funbox-strict-fields
+    - -fwrite-ide-info
   dependencies:
     - base
+    - aeson
+    - containers
+    - http-client
+    - http-client-tls
+    - mtl
     - servant
-    # - http-api-data
     - servant-client
-    # - servant-client-core
+    - text

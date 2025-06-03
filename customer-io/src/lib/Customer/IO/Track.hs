@@ -7,33 +7,51 @@ module Customer.IO.Track (
     -- * Client
     CustomerIOClient (..),
     createTrackClient,
-    identifyUser,
+    createOrUpdatePerson,
 
     -- * Types
-    CustomerIOAuth (..),
-    IdentifyRequest (..),
+    CustomerIOTrackAuth (..),
+    EntityRequest (..),
+    PersonEntity (..),
 
     -- * Errors
     CustomerIOError (..),
 ) where
 
-import Control.Monad.Except (ExceptT, runExceptT)
+import Control.Monad.Except (runExceptT)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (ToJSON)
 import Data.Aeson qualified as Aeson
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
+import Data.Proxy (Proxy (..))
 import Data.Text (Text)
 import Data.Text.Encoding qualified as T
 import GHC.Generics (Generic)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Servant.API
-import Servant.Client
+import Servant.API (
+    BasicAuth,
+    BasicAuthData (..),
+    JSON,
+    NoContent,
+    Post,
+    ReqBody,
+    (:>),
+ )
+import Servant.Client (
+    ClientEnv,
+    ClientError,
+    ClientM,
+    client,
+    mkClientEnv,
+    parseBaseUrl,
+    runClientM,
+ )
 
 
 -- | Authentication credentials for Customer.io
-data CustomerIOAuth = CustomerIOAuth
+data CustomerIOTrackAuth = CustomerIOTrackAuth
     { siteId :: Text
     -- ^ Your Customer.io Site ID
     , apiKey :: Text
@@ -42,16 +60,37 @@ data CustomerIOAuth = CustomerIOAuth
     deriving (Show)
 
 
--- | Request body for identifying a user
-newtype IdentifyRequest = IdentifyRequest
-    { attributes :: Map Text Aeson.Value
-    -- ^ User attributes
+-- | Person entity for the v2 API
+data PersonEntity = PersonEntity
+    { personType :: Text
+    -- ^ Always "person"
+    , personAction :: Text
+    -- ^ "identify" to create/update
+    , personIdentifiers :: Map Text Text
+    -- ^ Person identifiers (id, email, etc.)
+    , personAttributes :: Map Text Aeson.Value
+    -- ^ Person attributes
     }
     deriving (Show, Generic)
 
 
-instance ToJSON IdentifyRequest where
-    toJSON (IdentifyRequest attrs) = Aeson.Object (Aeson.fromMap attrs)
+instance ToJSON PersonEntity where
+    toJSON (PersonEntity pType pAction idents attrs) =
+        Aeson.object
+            [ "type" Aeson..= pType
+            , "action" Aeson..= pAction
+            , "identifiers" Aeson..= idents
+            , "attributes" Aeson..= attrs
+            ]
+
+
+-- | Request body for the v2 entity endpoint
+newtype EntityRequest = EntityRequest PersonEntity
+    deriving (Show, Generic)
+
+
+instance ToJSON EntityRequest where
+    toJSON (EntityRequest person) = Aeson.toJSON person
 
 
 -- | Customer.io API errors
@@ -59,26 +98,25 @@ newtype CustomerIOError = CustomerIOError ClientError
     deriving (Show)
 
 
--- | The identify endpoint - PUT /api/v1/customers/{identifier}
-type IdentifyAPI =
+-- | The v2 entity endpoint - POST /api/v2/entity
+type EntityAPI =
     "api"
-        :> "v1"
-        :> "customers"
-        :> Capture "identifier" Text
+        :> "v2"
+        :> "entity"
         :> BasicAuth "customer-io" ()
-        :> ReqBody '[JSON] IdentifyRequest
-        :> Put '[JSON] NoContent
+        :> ReqBody '[JSON] EntityRequest
+        :> Post '[JSON] NoContent
 
 
 -- | Simple Customer.io client
 data CustomerIOClient = CustomerIOClient
-    { clientAuth :: CustomerIOAuth
+    { clientAuth :: CustomerIOTrackAuth
     , clientEnv :: ClientEnv
     }
 
 
 -- | Create a Customer.io client with hardcoded track.customer.io URL
-createTrackClient :: CustomerIOAuth -> IO CustomerIOClient
+createTrackClient :: CustomerIOTrackAuth -> IO CustomerIOClient
 createTrackClient auth = do
     manager <- newManager tlsManagerSettings
     let baseUrl = fromMaybe (error "Invalid hardcoded URL") $ parseBaseUrl "https://track.customer.io"
@@ -86,21 +124,34 @@ createTrackClient auth = do
     pure $ CustomerIOClient auth env
 
 
--- | Identify a user by their identifier with attributes
-identifyUser :: CustomerIOClient -> Text -> Map Text Aeson.Value -> IO (Either CustomerIOError ())
-identifyUser client identifier attrs = do
+-- | Create or update a person using the v2 entity endpoint
+createOrUpdatePerson ::
+    CustomerIOClient ->
+    -- | Identifiers (email, id, etc.)
+    Map Text Text ->
+    -- | Attributes
+    Map Text Aeson.Value ->
+    IO (Either CustomerIOError ())
+createOrUpdatePerson trackClient identifiers attrs = do
     result <- runExceptT $ do
-        let request = IdentifyRequest attrs
+        let person =
+                PersonEntity
+                    { personType = "person"
+                    , personAction = "identify"
+                    , personIdentifiers = identifiers
+                    , personAttributes = attrs
+                    }
+            request = EntityRequest person
             basicAuth =
                 BasicAuthData
-                    (T.encodeUtf8 $ siteId $ clientAuth client)
-                    (T.encodeUtf8 $ apiKey $ clientAuth client)
-        liftIO $ runClientM (identifyClient identifier basicAuth request) (clientEnv client)
+                    (T.encodeUtf8 $ siteId $ clientAuth trackClient)
+                    (T.encodeUtf8 $ apiKey $ clientAuth trackClient)
+        liftIO $ runClientM (entityClient basicAuth request) (clientEnv trackClient)
     case result of
         Left err -> pure . Left $ CustomerIOError err
         Right _ -> pure $ Right ()
 
 
 -- | Internal client function generated by servant-client
-identifyClient :: Text -> BasicAuthData -> IdentifyRequest -> ClientM NoContent
-identifyClient = client (Proxy :: Proxy IdentifyAPI)
+entityClient :: BasicAuthData -> EntityRequest -> ClientM NoContent
+entityClient = client (Proxy :: Proxy EntityAPI)
