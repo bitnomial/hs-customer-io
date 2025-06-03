@@ -1,4 +1,0 @@
-resolver: lts-23.6
-extra-deps: []
-packages:
-  - "."

@@ -1,7 +1,0 @@
-.openapi-generator-ignore
-README.md
-Setup.hs
-journeys-track.cabal
-lib/JourneysTrack/API.hs
-lib/JourneysTrack/Types.hs
-stack.yaml
