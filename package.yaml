@@ -1,6 +1,6 @@
 ---
 name: customer-io
-version: 0.1.0
+version: 0.1.1
 synopsis: customer.io library
 maintainer: Bitnomial <help@bitnomial.com>
 homepage: https://customer.io
@@ -29,7 +29,6 @@ dependencies:
     - containers
     - http-client
     - http-client-tls
-    - mtl
     - servant
     - servant-client
     - text
